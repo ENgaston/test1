@@ -1,0 +1,46 @@
+pipeline {
+    agent any 
+
+    environment {
+        // Define your environment variables if any
+        DEPLOY_SERVER = 'your.remote.server.ip'
+        DEPLOY_PATH = '/path/to/deployment/directory'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout the code from the repository
+                checkout scm
+            }
+        }
+        
+        stage('Build and Test') {
+            steps {
+                // Build and test your application. Assuming it's a Node.js app:
+                sh 'npm install'
+                sh 'npm test'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                // Deploy to remote server using SSH
+                sshagent(['your-ssh-credentials-id']) {
+                    sh """
+                        rsync -avz ./* ${DEPLOY_SERVER}:${DEPLOY_PATH}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment completed successfully!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+    }
+}
